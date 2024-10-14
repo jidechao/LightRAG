@@ -1,3 +1,13 @@
+# Add Supports models other than OpenAI's models and JSON repair.
+Set the following environment variables:
+```python
+os.environ["model_api_key"]
+os.environ["model_base_url"]
+os.environ["llm_model_name"]
+os.environ["embed_model_name"]
+```
+
+
 # LightRAG: Simple and Fast Retrieval-Augmented Generation
 
 
