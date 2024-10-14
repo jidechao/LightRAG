@@ -1,5 +1,5 @@
 import asyncio
-import json
+import json_repair
 import re
 from typing import Union
 from collections import Counter, defaultdict
@@ -394,10 +394,10 @@ async def local_query(
     result = await use_model_func(kw_prompt)
     
     try:
-        keywords_data = json.loads(result)
+        keywords_data = json_repair.loads(result)
         keywords = keywords_data.get("low_level_keywords", [])
         keywords = ', '.join(keywords)
-    except json.JSONDecodeError as e:
+    except json_repair.JSONDecodeError as e:
         # Handle parsing error
         print(f"JSON parsing error: {e}")
         return PROMPTS["fail_response"]
@@ -613,10 +613,10 @@ async def global_query(
     result = await use_model_func(kw_prompt)
     
     try:
-        keywords_data = json.loads(result)
+        keywords_data = json_repair.loads(result)
         keywords = keywords_data.get("high_level_keywords", [])
         keywords = ', '.join(keywords)
-    except json.JSONDecodeError as e:
+    except json_repair.JSONDecodeError as e:
         # Handle parsing error
         print(f"JSON parsing error: {e}")
         return PROMPTS["fail_response"]
@@ -825,12 +825,12 @@ async def hybird_query(
     result = await use_model_func(kw_prompt)
 
     try:
-        keywords_data = json.loads(result)
+        keywords_data = json_repair.loads(result)
         hl_keywords = keywords_data.get("high_level_keywords", [])
         ll_keywords = keywords_data.get("low_level_keywords", [])
         hl_keywords = ', '.join(hl_keywords)
         ll_keywords = ', '.join(ll_keywords)
-    except json.JSONDecodeError as e:
+    except json_repair.JSONDecodeError as e:
         # Handle parsing error
         print(f"JSON parsing error: {e}")
         return PROMPTS["fail_response"]

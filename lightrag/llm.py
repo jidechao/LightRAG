@@ -7,6 +7,7 @@ from tenacity import (
     wait_exponential,
     retry_if_exception_type,
 )
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from .base import BaseKVStorage
 from .utils import compute_args_hash, wrap_embedding_func_with_attrs
@@ -19,7 +20,7 @@ from .utils import compute_args_hash, wrap_embedding_func_with_attrs
 async def openai_complete_if_cache(
     model, prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
-    openai_async_client = AsyncOpenAI()
+    openai_async_client = AsyncOpenAI(api_key=os.environ["model_api_key"],base_url=os.environ["model_base_url"])
     hashing_kv: BaseKVStorage = kwargs.pop("hashing_kv", None)
     messages = []
     if system_prompt:
@@ -46,7 +47,7 @@ async def gpt_4o_complete(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
     return await openai_complete_if_cache(
-        "gpt-4o",
+        os.environ["llm_model_name"],
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
@@ -58,25 +59,23 @@ async def gpt_4o_mini_complete(
     prompt, system_prompt=None, history_messages=[], **kwargs
 ) -> str:
     return await openai_complete_if_cache(
-        "gpt-4o-mini",
+        os.environ["llm_model_name"],
         prompt,
         system_prompt=system_prompt,
         history_messages=history_messages,
         **kwargs,
     )
 
-@wrap_embedding_func_with_attrs(embedding_dim=1536, max_token_size=8192)
+@wrap_embedding_func_with_attrs(embedding_dim=1024, max_token_size=8192)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=4, max=10),
     retry=retry_if_exception_type((RateLimitError, APIConnectionError, Timeout)),
 )
 async def openai_embedding(texts: list[str]) -> np.ndarray:
-    openai_async_client = AsyncOpenAI()
-    response = await openai_async_client.embeddings.create(
-        model="text-embedding-3-small", input=texts, encoding_format="float"
-    )
-    return np.array([dp.embedding for dp in response.data])
+    embed_model = HuggingFaceEmbedding(model_name=os.environ["embed_model_name"],)
+    response = embed_model.get_text_embedding_batch(texts)
+    return np.array([dp for dp in response])
 
 if __name__ == "__main__":
     import asyncio
